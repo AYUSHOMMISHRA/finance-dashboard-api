@@ -1,0 +1,49 @@
+# Quick start:
+# 1. cp .env.example .env
+# 2. docker-compose up --build
+# 3. docker-compose exec api npm run db:seed
+
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=postgres
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=finance_db
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/finance_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - finance-network
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=finance_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - finance-network
+
+volumes:
+  postgres_data:
+
+networks:
+  finance-network:
+    driver: bridge
