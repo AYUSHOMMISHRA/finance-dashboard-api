@@ -69,8 +69,8 @@ CREATE INDEX "FinancialRecord_date_idx" ON "FinancialRecord"("date");
 CREATE INDEX "FinancialRecord_isDeleted_idx" ON "FinancialRecord"("isDeleted");
 
 -- CreateIndex
-CREATE INDEX "FinancialRecord_isDeleted_type_date_idx" ON "FinancialRecord"("isDeleted", "type", 
-"date");                                                                                         
+CREATE INDEX "FinancialRecord_isDeleted_type_date_idx" ON "FinancialRecord"("isDeleted", "type", "date");
+
 -- CreateIndex
 CREATE INDEX "AuditLog_userId_idx" ON "AuditLog"("userId");
 
@@ -78,8 +78,7 @@ CREATE INDEX "AuditLog_userId_idx" ON "AuditLog"("userId");
 CREATE INDEX "AuditLog_entity_entityId_idx" ON "AuditLog"("entity", "entityId");
 
 -- AddForeignKey
-ALTER TABLE "FinancialRecord" ADD CONSTRAINT "FinancialRecord_createdById_fkey" FOREIGN KEY ("cre
-atedById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;                         
+ALTER TABLE "FinancialRecord" ADD CONSTRAINT "FinancialRecord_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
 -- AddForeignKey
-ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "U
-ser"("id") ON DELETE RESTRICT ON UPDATE CASCADE;                                                  
+ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
