@@ -11,9 +11,12 @@ const schema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
 });
 
+console.log('[ENV_DEBUG] DATABASE_URL value:', process.env.DATABASE_URL);
+
 const result = schema.safeParse(process.env);
 
 if (!result.success) {
+  console.log('[ENV_DEBUG] All env vars:', Object.keys(process.env).filter(k => k.includes('DATABASE') || k.includes('POSTGRES')));
   console.error('[ENV] Invalid environment variables:');
   console.error(result.error.flatten().fieldErrors);
   process.exit(1);
