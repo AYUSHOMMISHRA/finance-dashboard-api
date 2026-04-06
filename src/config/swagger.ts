@@ -1,5 +1,8 @@
 // src/config/swagger.ts
 import swaggerJsdoc from 'swagger-jsdoc';
+import path from 'path';
+
+const routeFilesGlob = path.join(__dirname, '../modules/**/*.routes.{ts,js}');
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -111,7 +114,7 @@ const options: swaggerJsdoc.Options = {
       },
     ],
   },
-  apis: ['./src/modules/**/*.routes.ts'],
+  apis: [routeFilesGlob],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
