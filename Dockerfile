@@ -1,41 +1,22 @@
-# Stage 1: Builder
-FROM node:20-alpine AS builder
-
+# Stage 1 - builder
+FROM node:20-slim AS builder
 WORKDIR /app
-
-COPY package*.json ./
-COPY prisma ./prisma/
-
+COPY package*.json tsconfig.json ./
+COPY prisma ./prisma
 RUN npm ci
-
-COPY . .
-
 RUN npx prisma generate
+COPY src ./src
 RUN npm run build
 
-# Stage 2: Runner
-FROM node:20-alpine AS runner
-
-RUN apk add --no-cache postgresql-client
-
+# Stage 2 - runner
+FROM node:20-slim
 WORKDIR /app
-
-ENV NODE_ENV=production
-
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
-COPY --chown=nodejs:nodejs docker-entrypoint.sh ./
-
-RUN chmod +x docker-entrypoint.sh
-
-USER nodejs
-
+RUN apt-get update -y && apt-get install -y openssl
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
+USER appuser
 EXPOSE 3000
-
-ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["node", "dist/index.js"]
