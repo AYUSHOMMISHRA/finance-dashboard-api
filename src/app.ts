@@ -42,20 +42,7 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
 });
 
 // 4. CORS
-app.use(
-  cors({
-    origin: (origin, callback): void => {
-      if (!origin || allowAnyOrigin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`Not allowed by CORS: ${origin}`));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  })
-);
+app.use(cors());
 
 // 5. Body parsing
 app.use(express.json({ limit: '10kb' }));
