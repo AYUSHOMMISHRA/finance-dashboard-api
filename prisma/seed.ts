@@ -5,41 +5,30 @@ import { AUDIT_ACTIONS } from '../src/constants/auditActions';
 
 const prisma = new PrismaClient();
 
-async function main(): Promise<void> {
-  // RULE 1 — IDEMPOTENCY: start by deleting in FK-safe order
-  await prisma.auditLog.deleteMany();
-  await prisma.financialRecord.deleteMany();
-  await prisma.user.deleteMany();
+async function ensureUser(email: string, name: string, role: Role, password: string) {
+  const existingUser = await prisma.user.findUnique({ where: { email } });
 
-  // Create 3 users via Promise.all
+  if (existingUser) {
+    return existingUser;
+  }
+
+  return prisma.user.create({
+    data: {
+      name,
+      email,
+      password: await bcrypt.hash(password, 12),
+      role,
+      status: 'ACTIVE',
+    },
+  });
+}
+
+async function main(): Promise<void> {
+  // Seed only missing demo users so production data is not wiped on every deploy.
   const [admin, analyst, viewer] = await Promise.all([
-    prisma.user.create({
-      data: {
-        name: 'Admin User',
-        email: 'admin@finance.com',
-        password: await bcrypt.hash('Admin@123', 12),
-        role: Role.ADMIN,
-        status: 'ACTIVE',
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Analyst User',
-        email: 'analyst@finance.com',
-        password: await bcrypt.hash('Analyst@123', 12),
-        role: Role.ANALYST,
-        status: 'ACTIVE',
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Viewer User',
-        email: 'viewer@finance.com',
-        password: await bcrypt.hash('Viewer@123', 12),
-        role: Role.VIEWER,
-        status: 'ACTIVE',
-      },
-    }),
+    ensureUser('admin@finance.com', 'Admin User', Role.ADMIN, 'Admin@123'),
+    ensureUser('analyst@finance.com', 'Analyst User', Role.ANALYST, 'Analyst@123'),
+    ensureUser('viewer@finance.com', 'Viewer User', Role.VIEWER, 'Viewer@123'),
   ]);
 
   // Create 30 records via Promise.all
@@ -93,46 +82,52 @@ async function main(): Promise<void> {
     { amount: '1500.00', type: RecordType.EXPENSE, category: 'entertainment', date: new Date(currentYear, 11, 25) },
   ];
 
-  // RULE 3 — Promise.all for record creates
-  await Promise.all(
-    recordsData.map((record) =>
-      prisma.financialRecord.create({
-        data: {
-          ...record,
-          createdById: admin.id,
-          isDeleted: false,
-        },
-      })
-    )
-  );
+  const existingRecordsCount = await prisma.financialRecord.count();
 
-  // 3 AuditLog entries in $transaction (small set, safe)
-  await prisma.$transaction([
-    prisma.auditLog.create({
-      data: {
-        userId: admin.id,
-        action: AUDIT_ACTIONS.LOGIN,
-        entity: 'User',
-        entityId: admin.id,
-      },
-    }),
-    prisma.auditLog.create({
-      data: {
-        userId: analyst.id,
-        action: AUDIT_ACTIONS.LOGIN,
-        entity: 'User',
-        entityId: analyst.id,
-      },
-    }),
-    prisma.auditLog.create({
-      data: {
-        userId: viewer.id,
-        action: AUDIT_ACTIONS.LOGIN,
-        entity: 'User',
-        entityId: viewer.id,
-      },
-    }),
-  ]);
+  if (existingRecordsCount === 0) {
+    await Promise.all(
+      recordsData.map((record) =>
+        prisma.financialRecord.create({
+          data: {
+            ...record,
+            createdById: admin.id,
+            isDeleted: false,
+          },
+        })
+      )
+    );
+  }
+
+  const existingAuditLogsCount = await prisma.auditLog.count();
+
+  if (existingAuditLogsCount === 0) {
+    await prisma.$transaction([
+      prisma.auditLog.create({
+        data: {
+          userId: admin.id,
+          action: AUDIT_ACTIONS.LOGIN,
+          entity: 'User',
+          entityId: admin.id,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: analyst.id,
+          action: AUDIT_ACTIONS.LOGIN,
+          entity: 'User',
+          entityId: analyst.id,
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          userId: viewer.id,
+          action: AUDIT_ACTIONS.LOGIN,
+          entity: 'User',
+          entityId: viewer.id,
+        },
+      }),
+    ]);
+  }
 
   console.info('Seed complete: 3 users, 30 records');
 }

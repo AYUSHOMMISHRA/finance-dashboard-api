@@ -18,6 +18,9 @@
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch"
   },
+  "prisma": {
+    "seed": "npm run db:seed"
+  },
   "keywords": [
     "finance",
     "dashboard",
