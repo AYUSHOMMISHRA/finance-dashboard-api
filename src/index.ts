@@ -16,7 +16,7 @@ process.on('uncaughtException', (err): void => {
   server.close(() => process.exit(1));
 });
 
-const server = app.listen(env.PORT, () => {
+const server = app.listen(env.PORT, '0.0.0.0', () => {
   console.info(`Server:  http://localhost:${env.PORT}`);
   console.info(`Docs:    http://localhost:${env.PORT}/api/v1/docs`);
   console.info(`Health:  http://localhost:${env.PORT}/health`);
