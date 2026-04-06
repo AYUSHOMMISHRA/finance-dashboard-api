@@ -11,6 +11,7 @@ export const authRouter = Router();
  * /auth/login:
  *   post:
  *     summary: Login with email and password
+ *     description: Use seeded demo accounts in non-production environments.
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -25,6 +26,22 @@ export const authRouter = Router();
  *                 format: email
  *               password:
  *                 type: string
+ *           examples:
+ *             admin:
+ *               summary: Seeded Admin account
+ *               value:
+ *                 email: admin@finance.com
+ *                 password: Admin@123
+ *             analyst:
+ *               summary: Seeded Analyst account
+ *               value:
+ *                 email: analyst@finance.com
+ *                 password: Analyst@123
+ *             viewer:
+ *               summary: Seeded Viewer account
+ *               value:
+ *                 email: viewer@finance.com
+ *                 password: Viewer@123
  *     responses:
  *       200:
  *         description: Login successful
