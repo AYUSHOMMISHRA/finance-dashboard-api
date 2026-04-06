@@ -45,6 +45,12 @@ docker-compose exec api npm run db:seed
 - Docs: http://localhost:3000/api/v1/docs
 - Health: http://localhost:3000/health
 
+## Production Deployment (Railway)
+
+- API: https://zorvyn-finance-dashboard-api.up.railway.app/
+- Docs: https://zorvyn-finance-dashboard-api.up.railway.app/api/v1/docs/
+- Health: https://zorvyn-finance-dashboard-api.up.railway.app/health
+
 ## Manual Setup
 
 ### Prerequisites
@@ -94,6 +100,10 @@ npm run dev
 | GET    | /dashboard/recent      | VIEWER, ANALYST, ADMIN | Last 10 records      |
 | GET    | /health                | Public                 | Health check         |
 | GET    | /api/v1/docs           | Public                 | Swagger UI           |
+
+The `/auth/register` endpoint is protected and requires a valid JWT token with `ADMIN` role.
+If accessed without authentication, it correctly returns a `401 Unauthorized` response.
+This demonstrates proper role-based access control implementation.
 
 ## Postman Import
 
