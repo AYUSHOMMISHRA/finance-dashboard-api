@@ -1,7 +1,10 @@
 // prisma/seed.ts
 import { PrismaClient, Role, RecordType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { AUDIT_ACTIONS } from '../src/constants/auditActions';
+
+const AUDIT_ACTIONS = {
+  LOGIN: 'LOGIN',
+} as const;
 
 const prisma = new PrismaClient();
 
