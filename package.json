@@ -12,7 +12,7 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write src/**/*.ts",
     "db:migrate": "prisma migrate dev",
-    "build:seed": "tsc prisma/seed.ts --outDir dist && mkdir -p dist/prisma && mv dist/seed.js dist/prisma/seed.js",
+    "build:seed": "tsc prisma/seed.ts --outDir dist --module commonjs --esModuleInterop",
     "db:seed": "node dist/seed.js",
     "db:reset": "prisma migrate reset --force && node dist/seed.js",
     "db:studio": "prisma studio",
