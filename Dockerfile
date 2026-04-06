@@ -11,7 +11,7 @@ RUN npm run build
 # Stage 2 - runner
 FROM node:20-slim
 WORKDIR /app
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && apt-get install -y openssl postgresql-client && rm -rf /var/lib/apt/lists/*
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
