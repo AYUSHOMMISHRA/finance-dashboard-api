@@ -11,13 +11,13 @@ RUN npm run build
 # Stage 2 - runner
 FROM node:20-slim
 WORKDIR /app
-RUN apt-get update -y && apt-get install -y openssl
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+RUN chown -R appuser:appgroup /app
 USER appuser
 EXPOSE 3000
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
