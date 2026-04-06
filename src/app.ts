@@ -17,6 +17,10 @@ import { recordRouter } from './modules/records/record.routes';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes';
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
+const allowedOrigins = env.CORS_ORIGIN.split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const allowAnyOrigin = allowedOrigins.includes('*');
 
 export const app = express();
 
@@ -40,7 +44,14 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
 // 4. CORS
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: (origin, callback): void => {
+      if (!origin || allowAnyOrigin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   })
