@@ -12,8 +12,9 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write src/**/*.ts",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "ts-node prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force && ts-node prisma/seed.ts",
+    "build:seed": "tsc prisma/seed.ts --outDir dist && mkdir -p dist/prisma && mv dist/seed.js dist/prisma/seed.js",
+    "db:seed": "node dist/seed.js",
+    "db:reset": "prisma migrate reset --force && node dist/seed.js",
     "db:studio": "prisma studio",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch"

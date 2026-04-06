@@ -7,6 +7,7 @@ RUN npm ci
 RUN npx prisma generate
 COPY src ./src
 RUN npm run build
+RUN npm run build:seed
 
 # Stage 2 - runner
 FROM node:20-slim
@@ -20,4 +21,4 @@ COPY --from=builder /app/prisma ./prisma
 RUN chown -R appuser:appgroup /app
 USER appuser
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/seed.js && node dist/index.js"]
