@@ -1,4 +1,5 @@
 // src/config/env.ts
+console.log('[STARTUP] env.ts loading at', new Date().toISOString());
 import 'dotenv/config';
 import { z } from 'zod';
 
@@ -13,7 +14,9 @@ const schema = z.object({
 
 const result = schema.safeParse(process.env);
 
+console.log('[STARTUP] env validation result:', result.success ? 'SUCCESS' : 'FAILED');
 if (!result.success) {
+  console.log('[STARTUP] Validation errors:', JSON.stringify(result.error.flatten().fieldErrors, null, 2));
   console.error('[ENV] Invalid environment variables:');
   console.error(result.error.flatten().fieldErrors);
   process.exit(1);
@@ -27,3 +30,4 @@ if (env.JWT_SECRET.length < 32) {
       'Use a longer random string in production.'
   );
 }
+console.log('[STARTUP] env.ts completed successfully');
