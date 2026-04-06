@@ -20,6 +20,6 @@ export const authController = {
 
   getMe: catchAsync(async (req: Request, res: Response): Promise<void> => {
     const user = await getMe(req.user!.id);
-    sendSuccess(res, { user });
+    sendSuccess(res, user);
   }),
 };

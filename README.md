@@ -1,6 +1,6 @@
 # Finance Dashboard Backend
 
-![Tests](https://img.shields.io/badge/tests-48%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-121%20passed-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
 ![Node](https://img.shields.io/badge/node-20%2B-green)
 
@@ -136,11 +136,11 @@ Requires `TEST_DATABASE_URL` in .env (separate test database). globalSetup migra
 
 ### Test Results
 
-Test Suites: 3 passed, 3 total
-Tests:       48 passed, 48 total
-Time:        ~27s
+Test Suites: 1 passed, 1 total
+Tests:       121 passed, 121 total
+Time:        ~18s
 
-Covers 48 test cases across auth, records, and dashboard modules including edge cases: timing-safe login, soft delete enforcement, decimal validation, RBAC on every route, and double-delete protection.
+Covers 121 test cases across auth, users, records, dashboard, and security edge cases including timing-safe login, soft delete enforcement, decimal validation, RBAC on every route, deactivation checks, token expiry, and double-delete protection.
 
 ### Test Coverage
 

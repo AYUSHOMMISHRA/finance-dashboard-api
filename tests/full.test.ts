@@ -271,6 +271,24 @@ describe('Auth Module', () => {
       expect(res.status).toBe(400);
       expect((res.body as ErrorBody).error.code).toBe('VALIDATION_ERROR');
     });
+
+    tracked('Auth', 'inactive user login returns 403 ACCOUNT_DEACTIVATED', async () => {
+      const user = await createUserAsAdmin(sectionAdminToken, {
+        email: uniqueEmail('inactive-login'),
+        password: 'ValidPass1',
+        role: 'VIEWER',
+      });
+      await request(app)
+        .patch(`${BASE}/users/${user.id}`)
+        .set(auth(sectionAdminToken))
+        .send({ status: 'INACTIVE' });
+
+      const res = await request(app)
+        .post(`${BASE}/auth/login`)
+        .send({ email: user.email, password: 'ValidPass1' });
+
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('GET /auth/me', () => {
@@ -280,7 +298,7 @@ describe('Auth Module', () => {
         .set(auth(sectionAdminToken));
 
       expect(res.status).toBe(200);
-      expect(res.body.data.user.password).toBeUndefined();
+      expect(res.body.data.password).toBeUndefined();
     });
 
     tracked('Auth', 'no token returns 401', async () => {
@@ -303,6 +321,17 @@ describe('Auth Module', () => {
 
       expect(res.status).toBe(401);
       expect((res.body as ErrorBody).error.code).toBe('INVALID_TOKEN');
+    });
+
+    tracked('Auth', 'GET /auth/me data is the user directly, not nested under data.user', async () => {
+      const res = await request(app)
+        .get(`${BASE}/auth/me`)
+        .set(auth(sectionAdminToken));
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.id).toBeDefined();
+      expect(res.body.data.email).toBeDefined();
+      expect(res.body.data.role).toBeDefined();
     });
   });
 
@@ -457,6 +486,11 @@ describe('Users Module', () => {
         .set(auth(sectionViewerToken));
       expect(res.status).toBe(403);
     });
+
+    tracked('Users', 'no token returns 401 on GET /users', async () => {
+      const res = await request(app).get(`${BASE}/users`);
+      expect(res.status).toBe(401);
+    });
   });
 
   describe('GET /users', () => {
@@ -555,7 +589,7 @@ describe('Users Module', () => {
         .set(auth(sectionAdminToken));
 
       const res = await request(app)
-        .patch(`${BASE}/users/${me.body.data.user.id}`)
+        .patch(`${BASE}/users/${me.body.data.id}`)
         .set(auth(sectionAdminToken))
         .send({ role: 'VIEWER' });
 
@@ -568,7 +602,7 @@ describe('Users Module', () => {
         .set(auth(sectionAdminToken));
 
       const res = await request(app)
-        .patch(`${BASE}/users/${me.body.data.user.id}`)
+        .patch(`${BASE}/users/${me.body.data.id}`)
         .set(auth(sectionAdminToken))
         .send({ status: 'INACTIVE' });
 
@@ -613,10 +647,17 @@ describe('Users Module', () => {
         .set(auth(sectionAdminToken));
 
       const res = await request(app)
-        .delete(`${BASE}/users/${me.body.data.user.id}`)
+        .delete(`${BASE}/users/${me.body.data.id}`)
         .set(auth(sectionAdminToken));
 
       expect(res.status).toBe(403);
+    });
+
+    tracked('Users', 'nonexistent id returns 404', async () => {
+      const res = await request(app)
+        .delete(`${BASE}/users/00000000-0000-0000-0000-000000000000`)
+        .set(auth(sectionAdminToken));
+      expect(res.status).toBe(404);
     });
 
     tracked('Users', 'GET after DELETE returns 200 with status INACTIVE (not hard deleted)', async () => {
@@ -788,6 +829,11 @@ describe('Records Module — Create & Read', () => {
       expect(res.status).toBe(403);
     });
 
+    tracked('Records Create/Read', 'no token returns 401', async () => {
+      const res = await request(app).get(`${BASE}/records`);
+      expect(res.status).toBe(401);
+    });
+
     tracked('Records Create/Read', 'meta has page, limit, total, totalPages', async () => {
       const res = await request(app)
         .get(`${BASE}/records`)
@@ -831,6 +877,17 @@ describe('Records Module — Create & Read', () => {
       expect((res.body.data as RecordLike[]).length).toBeGreaterThan(0);
     });
 
+    tracked('Records Create/Read', '?category=salary returns only salary records', async () => {
+      const res = await request(app)
+        .get(`${BASE}/records?category=salary`)
+        .set(auth(sectionAnalystToken));
+
+      expect(res.status).toBe(200);
+      for (const r of res.body.data as RecordLike[]) {
+        expect(r.category.toLowerCase()).toContain('salary');
+      }
+    });
+
     tracked('Records Create/Read', '?startDate before endDate returns 200', async () => {
       const res = await request(app)
         .get(`${BASE}/records?startDate=2025-01-01&endDate=2025-12-31`)
@@ -855,6 +912,17 @@ describe('Records Module — Create & Read', () => {
 
       expect(res.status).toBe(200);
       expect((res.body.data as RecordLike[]).length).toBeLessThanOrEqual(3);
+    });
+
+    tracked('Records Create/Read', '?sortBy=amount&order=asc returns 200', async () => {
+      const res = await request(app)
+        .get(`${BASE}/records?sortBy=amount&order=asc`)
+        .set(auth(sectionAnalystToken));
+      expect(res.status).toBe(200);
+      const amounts = (res.body.data as RecordLike[]).map((r) => parseFloat(r.amount));
+      for (let i = 1; i < amounts.length; i += 1) {
+        expect(amounts[i]).toBeGreaterThanOrEqual(amounts[i - 1]);
+      }
     });
   });
 
@@ -957,6 +1025,19 @@ describe('Records Module — Update & Delete', () => {
         .send({ amount: 100 });
 
       expect(res.status).toBe(404);
+    });
+
+    tracked('Records Update/Delete', 'future date on PATCH returns 400', async () => {
+      const rec = await createRecordAsAdmin(sectionAdminToken, { category: 'future-patch' });
+      const future = new Date();
+      future.setDate(future.getDate() + 5);
+
+      const res = await request(app)
+        .patch(`${BASE}/records/${rec.id}`)
+        .set(auth(sectionAdminToken))
+        .send({ date: future.toISOString().split('T')[0] });
+
+      expect(res.status).toBe(400);
     });
   });
 
@@ -1114,6 +1195,35 @@ describe('Dashboard Module', () => {
         .set(auth(sectionViewerToken));
       expect(typeof res.body.data.totalRecords).toBe('number');
     });
+
+    tracked('Dashboard', 'soft-deleted record is excluded from summary totals', async () => {
+      const before = await request(app)
+        .get(`${BASE}/dashboard/summary`)
+        .set(auth(sectionAdminToken));
+      const incomeBefore = parseFloat(before.body.data.totalIncome);
+
+      const rec = await createRecordAsAdmin(sectionAdminToken, {
+        amount: 9999,
+        type: 'INCOME',
+        category: 'soft-delete-test',
+      });
+
+      const after = await request(app)
+        .get(`${BASE}/dashboard/summary`)
+        .set(auth(sectionAdminToken));
+      const incomeAfter = parseFloat(after.body.data.totalIncome);
+      expect(incomeAfter).toBeCloseTo(incomeBefore + 9999, 2);
+
+      await request(app)
+        .delete(`${BASE}/records/${rec.id}`)
+        .set(auth(sectionAdminToken));
+
+      const final = await request(app)
+        .get(`${BASE}/dashboard/summary`)
+        .set(auth(sectionAdminToken));
+      const incomeFinal = parseFloat(final.body.data.totalIncome);
+      expect(incomeFinal).toBeCloseTo(incomeBefore, 2);
+    });
   });
 
   describe('GET /dashboard/by-category', () => {
@@ -1137,6 +1247,13 @@ describe('Dashboard Module', () => {
       expect(item.category).toBeDefined();
       expect(item.type).toBeDefined();
       expect(item.total).toBeDefined();
+    });
+
+    tracked('Dashboard', 'ANALYST gets 200 on /dashboard/by-category', async () => {
+      const res = await request(app)
+        .get(`${BASE}/dashboard/by-category`)
+        .set(auth(sectionAnalystToken));
+      expect(res.status).toBe(200);
     });
   });
 
@@ -1312,6 +1429,22 @@ describe('Security & Edge Cases', () => {
         .set('Authorization', `Bearer ${bogus}`);
 
       expect(res.status).toBe(401);
+    });
+
+    tracked('Security', 'expired token returns 401 TOKEN_EXPIRED', async () => {
+      const expired = jwt.sign(
+        { id: 'some-id', email: 'x@x.com', role: 'ADMIN' },
+        env.JWT_SECRET,
+        { expiresIn: '1ms' }
+      );
+      await new Promise((r) => setTimeout(r, 50));
+
+      const res = await request(app)
+        .get(`${BASE}/auth/me`)
+        .set('Authorization', `Bearer ${expired}`);
+
+      expect(res.status).toBe(401);
+      expect((res.body as ErrorBody).error.code).toBe('TOKEN_EXPIRED');
     });
   });
 
