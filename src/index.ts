@@ -1,7 +1,9 @@
 // src/index.ts
+console.log('[STARTUP] index.ts loaded at', new Date().toISOString());
 // Line 1 — MUST be first import, validates env before anything loads
 import './config/env';
 import { env } from './config/env';
+console.log('[STARTUP] env imported successfully, PORT:', env.PORT);
 import { app } from './app';
 import { prisma } from './utils/prismaClient';
 
@@ -17,6 +19,7 @@ process.on('uncaughtException', (err): void => {
 });
 
 const server = app.listen(env.PORT, () => {
+  console.log('[STARTUP] Server created and listening');
   console.info(`Server:  http://localhost:${env.PORT}`);
   console.info(`Docs:    http://localhost:${env.PORT}/api/v1/docs`);
   console.info(`Health:  http://localhost:${env.PORT}/health`);
