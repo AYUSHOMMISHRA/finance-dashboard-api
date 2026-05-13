@@ -47,9 +47,9 @@ docker-compose exec api npm run db:seed
 
 ## Production Deployment (Railway)
 
-- API: https://zorvyn-finance-dashboard-api.up.railway.app/
-- Docs: https://zorvyn-finance-dashboard-api.up.railway.app/api/v1/docs/
-- Health: https://zorvyn-finance-dashboard-api.up.railway.app/health
+- API: https://company-finance-dashboard-api.up.railway.app/
+- Docs: https://company-finance-dashboard-api.up.railway.app/api/v1/docs/
+- Health: https://company-finance-dashboard-api.up.railway.app/health
 
 ## Manual Setup
 
