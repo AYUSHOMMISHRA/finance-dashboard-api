@@ -19,6 +19,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/prisma ./prisma
 RUN chown -R appuser:appgroup /app
-USER appuser
+# USER appuser  # temporarily disabled to diagnose startup crash (permission issue investigation)
 EXPOSE 3000
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/seed.js && node dist/index.js"]
